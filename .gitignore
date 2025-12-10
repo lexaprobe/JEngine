@@ -1,0 +1,12 @@
+# gradle
+.gradle/
+build/
+app/build/
+
+.vscode/
+
+# shell scripts
+*.sh
+
+# MacOS garbage
+.DS_Store
