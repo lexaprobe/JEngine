@@ -76,11 +76,22 @@ public class Vector {
     return (float) Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
   }
 
+  /**
+   * Set the components of this Vector to some value.
+   * 
+   * @param x
+   * @param y
+   */
   public void set(float x, float y) {
     this.x = x;
     this.y = y;
   }
 
+  /**
+   * Set the components of this Vector to some value.
+   * 
+   * @param components an array of two floats (x, y)
+   */
   public void set(Float[] components) {
     if (components.length != 2) {
       throw new IllegalArgumentException("expected 2 components, got " + components.length);

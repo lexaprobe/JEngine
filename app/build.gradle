@@ -10,7 +10,7 @@ repositories {
 def os = org.gradle.internal.os.OperatingSystem.current()
 ext.lwjglNatives = os.isWindows() ? "natives-windows" :
                    os.isLinux() ? "natives-linux" :
-                   os.isMacOsX() ? "natives-macos" :
+                   os.isMacOsX() ? "natives-macos-arm64" :
                    { throw new GradleException("Unsupported OS: " + os) }()
 
 ext.lwjglVersion = "3.3.3"
@@ -39,6 +39,10 @@ java {
 
 application {
     mainClass = 'jengine.Engine'
+
+    applicationDefaultJvmArgs = [
+        "-XstartOnFirstThread"
+    ]
 }
 
 tasks.named('test') {
