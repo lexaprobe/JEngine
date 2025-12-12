@@ -22,11 +22,11 @@ public class Vector {
   }
 
   /**
-   * Compute the addition between two Vector objects. Equivalent to <code>C = A + B</code>.
+   * Compute the addition between two Vector objects. Equivalent to {@code C = A + B}.
    * 
-   * @param v1 <code>A</code>
-   * @param v2 <code>B</code>
-   * @return the resultant Vector (<code>C</code>)
+   * @param v1 {@code A}
+   * @param v2 {@code B}
+   * @return the resultant Vector ({@code C})
    */
   public static Vector add(Vector v1, Vector v2) {
     float x = v1.x + v2.x;
@@ -35,15 +35,28 @@ public class Vector {
   }
 
   /**
-   * Subtract one Vector object from another. Equivalent to <code>C = A + (-B)</code>.
+   * Subtract one Vector object from another. Equivalent to {@code C = A + (-B)}.
    * 
-   * @param v1 <code>A</code>
-   * @param v2 <code>B</code>
-   * @return the resultant Vector (<code>C</code>)
+   * @param v1 {@code A}
+   * @param v2 {@code B}
+   * @return the resultant Vector ({@code C})
    */
   public static Vector sub(Vector v1, Vector v2) {
     float x = v1.x - v2.x;
     float y = v1.y - v2.y;
+    return new Vector(x, y);
+  }
+
+  /**
+   * Compute the scaled equivalent of a given Vector object. Equivalent to {@code B = A * s}
+   * 
+   * @param v {@code A}
+   * @param scalar {@code s}
+   * @return the scaled Vector ({@code B})
+   */
+  public static Vector scale(Vector v, double scalar) {
+    float x = (float) (v.x * scalar);
+    float y = (float) (v.y * scalar);
     return new Vector(x, y);
   }
 
@@ -101,6 +114,18 @@ public class Vector {
   }
 
   /**
+   * Set this Vector equal to some other Vector.
+   * 
+   * @param v a Vector object
+   */
+  public void set(Vector v) {
+    if (v != null) {
+      this.x = v.x;
+      this.y = v.y;
+    }
+  }
+
+  /**
    * Scale both components of this Vector by some number.
    * 
    * @param scalar some number
@@ -113,23 +138,10 @@ public class Vector {
   }
 
   /**
-   * Returns a new Vector instance with components equivalent to scaled values of this Vector's
-   * components. Does <em>not</em> alter the callee Vector's components.
+   * Add this Vector to another Vector. Equivalent to {@code A = A + B}.
    * 
-   * @param scalar some number
-   * @return a new Vector instance
-   */
-  public Vector scaled(double scalar) {
-    float x = (float) (this.x * scalar);
-    float y = (float) (this.y * scalar);
-    return new Vector(x, y);
-  }
-
-  /**
-   * Add this Vector to another Vector. Equivalent to <code>A = A + B</code>.
-   * 
-   * @param vector a Vector object
-   * @return this Vector instance
+   * @param vector {@code B}
+   * @return this Vector instance ({@code A})
    */
   public Vector add(Vector vector) {
     if (vector == null) {
@@ -145,10 +157,10 @@ public class Vector {
   }
 
   /**
-   * Subtract a Vector from this Vector. Equivalent to <code>A = A + (-B)</code>.
+   * Subtract a Vector from this Vector. Equivalent to {@code A = A + (-B)}.
    * 
-   * @param vector a Vector object
-   * @return this Vector instance
+   * @param vector {@code B}
+   * @return this Vector instance ({@code A})
    */
   public Vector sub(Vector vector) {
     if (vector == null) {
@@ -183,9 +195,9 @@ public class Vector {
   }
 
   /**
-   * Noramlise this Vector. Equivalent to <code>A = A.scale(1 / |A|)</code>
+   * Noramlise this Vector. Equivalent to {@code A = A.scale(1 / A.magnitude())}
    * 
-   * @return this Vector
+   * @return this Vector ({@code A})
    */
   public Vector normalise() {
     float length = magnitude();
@@ -193,20 +205,6 @@ public class Vector {
       this.set(x / length, y / length);
     }
     return this;
-  }
-
-  /**
-   * Compute the normal of this Vector and return it. Equivalent to
-   * <code>N = A.scaled(1 / |A|)</code>
-   * 
-   * @return the normal
-   */
-  public Vector normalised() {
-    float length = magnitude();
-    if (length == 0) {
-      return this;
-    }
-    return new Vector(x / length, y / length);
   }
 
   @Override

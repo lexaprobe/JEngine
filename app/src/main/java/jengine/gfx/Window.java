@@ -1,4 +1,4 @@
-package jengine;
+package jengine.gfx;
 
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
@@ -13,10 +13,31 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
-public class Renderer {
+public class Window {
   private long window;
-  private final int WINDOW_WIDTH = 800;
-  private final int WINDOW_HEIGHT = 800;
+  private int width;
+  private int height;
+  private float red = 0.0f;
+  private float green = 0.0f;
+  private float blue = 0.0f;
+
+  public Window(int width, int height) {
+    this.width = width;
+    this.height = height;
+  }
+
+  public void setColour(Float[] rgb) {
+    if (rgb == null || rgb.length != 3) {
+      throw new IllegalArgumentException();
+    }
+    red = rgb[0] % 1.0f;
+    blue = rgb[1] % 1.0f;
+    green = rgb[2] % 1.0f;
+  }
+
+  public Integer[] size() {
+    return new Integer[] {width, height};
+  }
 
   public void run() {
     init();
@@ -40,7 +61,7 @@ public class Renderer {
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     // create the window
-    window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "JEngine", NULL, NULL);
+    window = glfwCreateWindow(width, height, "JEngine", NULL, NULL);
     if (window == NULL) {
       throw new RuntimeException("Failed to create the GLFW window");
     }
@@ -69,7 +90,7 @@ public class Renderer {
 
   private void loop() {
     GL.createCapabilities();
-    glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+    glClearColor(red, green, blue, 0.0f);
 
     while (!glfwWindowShouldClose(window)) {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

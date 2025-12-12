@@ -8,7 +8,7 @@ public class DynamicAtom extends Atom {
 
   public DynamicAtom(float mass, float radius, Float[] position) {
     super(mass, radius, position);
-    this.previousPosition = this.position.clone();
+    previousPosition = this.position.clone();
   }
 
   public DynamicAtom(float mass, float radius, Float[] position, Float[] velocity) {
@@ -16,7 +16,7 @@ public class DynamicAtom extends Atom {
     if (velocity.length != 2) {
       throw new IllegalArgumentException("expected 2 velocity components, got " + velocity.length);
     }
-    this.previousPosition = Vector.sub(this.position, new Vector(velocity));
+    previousPosition = Vector.sub(this.position, new Vector(velocity));
   }
 
   public Vector previousPosition() {
@@ -32,6 +32,12 @@ public class DynamicAtom extends Atom {
   }
 
   public void accelerate(Float[] components) {
-    this.acceleration.set(components);
+    acceleration.set(components);
+  }
+
+  public void accelerate(Vector v) {
+    if (v != null) {
+      acceleration.set(v);
+    }
   }
 }

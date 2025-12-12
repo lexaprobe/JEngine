@@ -38,7 +38,7 @@ java {
 }
 
 application {
-    mainClass = 'jengine.Engine'
+    mainClass = 'jengine.JEngine'
 
     applicationDefaultJvmArgs = [
         "-XstartOnFirstThread"
