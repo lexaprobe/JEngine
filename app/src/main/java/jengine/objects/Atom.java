@@ -6,9 +6,9 @@ public abstract class Atom {
   protected float mass;
   protected float radius;
   protected Vector position;
-  protected Integer[] colour = new Integer[] {255, 255, 255};
+  protected int[] colour = new int[] {255, 255, 255};
 
-  public Atom(float mass, float radius, Float[] position) {
+  public Atom(float mass, float radius, float[] position) {
     if (position.length != 2) {
       throw new IllegalArgumentException(
           "expected 2 positional components, got " + position.length);
@@ -30,7 +30,7 @@ public abstract class Atom {
     return position;
   }
 
-  public Integer[] colour() {
+  public int[] colour() {
     return colour;
   }
 
@@ -46,7 +46,7 @@ public abstract class Atom {
     return (float) distance;
   }
 
-  public void paint(Integer[] rgb) {
+  public void paint(int[] rgb) {
     if (rgb.length != 3) {
       throw new IllegalArgumentException("expected 3 values in RGB, got " + rgb.length);
     }

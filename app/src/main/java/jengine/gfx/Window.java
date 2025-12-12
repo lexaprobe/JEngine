@@ -17,40 +17,13 @@ public class Window {
   private long window;
   private int width;
   private int height;
-  private float red = 0.0f;
-  private float green = 0.0f;
-  private float blue = 0.0f;
 
   public Window(int width, int height) {
     this.width = width;
     this.height = height;
   }
 
-  public void setColour(Float[] rgb) {
-    if (rgb == null || rgb.length != 3) {
-      throw new IllegalArgumentException();
-    }
-    red = rgb[0] % 1.0f;
-    blue = rgb[1] % 1.0f;
-    green = rgb[2] % 1.0f;
-  }
-
-  public Integer[] size() {
-    return new Integer[] {width, height};
-  }
-
-  public void run() {
-    init();
-    loop();
-
-    glfwFreeCallbacks(window);
-    glfwDestroyWindow(window);
-
-    glfwTerminate();
-    glfwSetErrorCallback(null).free();
-  }
-
-  private void init() {
+  public void init() {
     GLFWErrorCallback.createPrint(System.err).set();
 
     if (!glfwInit()) {
@@ -86,16 +59,38 @@ public class Window {
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
     glfwShowWindow(window);
+
+    GL.createCapabilities();
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0, width, height, 0, -1, 1);
+
+    glMatrixMode(GL_MODELVIEW);
   }
 
-  private void loop() {
-    GL.createCapabilities();
-    glClearColor(red, green, blue, 0.0f);
+  public boolean shouldClose() {
+    return glfwWindowShouldClose(window);
+  }
 
-    while (!glfwWindowShouldClose(window)) {
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-      glfwSwapBuffers(window);
-      glfwPollEvents();
-    }
+  public void pollEvents() {
+    glfwPollEvents();
+  }
+
+  public void swapBuffers() {
+    glfwSwapBuffers(window);
+  }
+
+  public double time() {
+    return glfwGetTime();
+  }
+
+  public void terminate() {
+    glfwFreeCallbacks(window);
+    glfwDestroyWindow(window);
+
+    glfwTerminate();
+    glfwSetErrorCallback(null).free();
   }
 }

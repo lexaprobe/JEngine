@@ -9,7 +9,7 @@ public class Vector {
     this.y = y;
   }
 
-  public Vector(Float[] components) {
+  public Vector(float[] components) {
     if (components.length != 2) {
       throw new IllegalArgumentException("expected 2 components, got " + components.length);
     }
@@ -76,8 +76,8 @@ public class Vector {
     return new Vector(x, y);
   }
 
-  public Float[] components() {
-    return new Float[] {x, y};
+  public float[] components() {
+    return new float[] {x, y};
   }
 
   /**
@@ -105,7 +105,7 @@ public class Vector {
    * 
    * @param components an array of two floats (x, y)
    */
-  public void set(Float[] components) {
+  public void set(float[] components) {
     if (components.length != 2) {
       throw new IllegalArgumentException("expected 2 components, got " + components.length);
     }
@@ -147,7 +147,7 @@ public class Vector {
     if (vector == null) {
       return this;
     }
-    Float[] components = vector.components();
+    float[] components = vector.components();
     if (components.length != 2) {
       throw new RuntimeException("vector addition with invalid Vector2D object");
     }
@@ -166,7 +166,7 @@ public class Vector {
     if (vector == null) {
       return this;
     }
-    Float[] components = vector.components();
+    float[] components = vector.components();
     if (components.length != 2) {
       throw new RuntimeException("vector subtraction with invalid Vector2D object");
     }
@@ -185,7 +185,7 @@ public class Vector {
     if (vector == null) {
       return x + y;
     }
-    Float[] components = vector.components();
+    float[] components = vector.components();
     if (components.length != 2) {
       throw new RuntimeException("dot product with invalid Vector2D object");
     }

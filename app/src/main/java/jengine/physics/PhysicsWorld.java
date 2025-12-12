@@ -12,7 +12,7 @@ public class PhysicsWorld {
   private float width;
   private float height;
   private List<Atom> objects = new ArrayList<>();
-  private Float[] gravity = new Float[] {0f, -9.81f};
+  private float[] gravity = new float[] {0f, 300f};
   private float damping = 0.9f;
 
   public PhysicsWorld(float width, float height) {
@@ -20,7 +20,7 @@ public class PhysicsWorld {
     this.height = height;
   }
 
-  public PhysicsWorld(Float[] size) {
+  public PhysicsWorld(float[] size) {
     if (size.length != 2) {
       throw new IllegalArgumentException();
     }
@@ -28,12 +28,20 @@ public class PhysicsWorld {
     height = size[1];
   }
 
-  public PhysicsWorld(Integer[] size) {
+  public PhysicsWorld(int[] size) {
     if (size.length != 2) {
       throw new IllegalArgumentException();
     }
     width = (float) size[0];
     height = (float) size[1];
+  }
+
+  public float width() {
+    return width;
+  }
+
+  public float height() {
+    return height;
   }
 
   public boolean addObject(Atom atom) {
@@ -60,11 +68,11 @@ public class PhysicsWorld {
     objects.clear();
   }
 
-  public Float[] centre() {
-    return new Float[] {width / 2, height / 2};
+  public float[] centre() {
+    return new float[] {width / 2, height / 2};
   }
 
-  public void setGravity(Float[] gravity) {
+  public void setGravity(float[] gravity) {
     if (gravity.length != 2) {
       throw new IllegalArgumentException("expected 2 components, got " + gravity.length);
     }
