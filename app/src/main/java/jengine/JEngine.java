@@ -7,7 +7,7 @@ import jengine.objects.DynamicAtom;
 import jengine.objects.StaticAtom;
 
 public class JEngine {
-  private final int targetFPS = 120;
+  private final int targetFPS = 60;
   private final PhysicsWorld world;
   private final Renderer renderer;
   private final Window window;
@@ -20,33 +20,31 @@ public class JEngine {
 
   public void run() {
     window.init();
-    float dt = 1 / targetFPS;
-    double prevTime = window.time();
-    spawnObjectDynamic(world, world.centre());
-
+    float dt = 1f / targetFPS;
     while (!window.shouldClose()) {
-      double currentTime = window.time();
-      double deltaTime = currentTime - prevTime;
-      prevTime = currentTime;
-
-      window.pollEvents();
-      // check here if a certain key is pressed
-      if (deltaTime >= dt) {
-        world.step(dt);
-        renderer.renderScene(world);
-        window.swapBuffers();
+      try {
+        Thread.sleep((long) (dt * 1000));
+      } catch (InterruptedException e) {
       }
+      window.pollEvents();
+      float[] coords = window.mouseClicked();
+      if (coords != null) {
+        spawnObjectDynamic(world, coords);
+      }
+      // check here if a certain key is pressed
+      world.step(dt, 8);
+      renderer.renderScene(world);
+      window.swapBuffers();
     }
-
     window.terminate();
   }
 
   public void spawnObjectStatic(PhysicsWorld world, float[] pos) {
-    world.addObject(new StaticAtom(1, 10f, pos));
+    world.addObject(new StaticAtom(1, 30f, pos));
   }
 
   public void spawnObjectDynamic(PhysicsWorld world, float[] pos) {
-    world.addObject(new DynamicAtom(1, 10f, pos));
+    world.addObject(new DynamicAtom(1, 30f, pos));
   }
 
   public static void main(String[] args) {
