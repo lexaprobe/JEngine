@@ -7,7 +7,8 @@ import org.lwjgl.system.MemoryStack;
 
 import java.nio.IntBuffer;
 import java.nio.DoubleBuffer;
-import java.util.Stack;
+import java.util.Queue;
+import java.util.LinkedList;
 
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
@@ -19,7 +20,7 @@ public class Window {
   private long window;
   private int width;
   private int height;
-  private Stack<int[]> mouseClicks = new Stack<>();
+  private Queue<double[]> mouseClicks = new LinkedList<>();
 
   public Window(int width, int height) {
     this.width = width;
@@ -50,7 +51,7 @@ public class Window {
 
     glfwSetMouseButtonCallback(window, (window, button, action, mods) -> {
       if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-        mouseClicks.push(getCursorPos());
+        mouseClicks.offer(getCursorPos());
       }
     });
 
@@ -95,12 +96,12 @@ public class Window {
     return glfwGetTime();
   }
 
-  public int[] getCursorPos() {
+  public double[] getCursorPos() {
     try (MemoryStack stack = stackPush()) {
       DoubleBuffer xpos = stack.mallocDouble(1);
       DoubleBuffer ypos = stack.mallocDouble(1);
       glfwGetCursorPos(window, xpos, ypos);
-      return new int[] {(int) xpos.get(0), (int) ypos.get(0)};
+      return new double[] {xpos.get(0), ypos.get(0)};
     }
   }
 
@@ -108,7 +109,7 @@ public class Window {
     if (mouseClicks.isEmpty()) {
       return null;
     }
-    int[] coords = mouseClicks.pop();
+    double[] coords = mouseClicks.poll();
     return new float[] {(float) coords[0], (float) coords[1]};
   }
 

@@ -3,12 +3,15 @@ package jengine.objects;
 import jengine.physics.Vector;
 
 public abstract class Atom {
+  public static float DEFAULT_RADIUS = 30f;
+  public static float DEFAULT_MASS = 1f;
+
   protected float mass;
   protected float radius;
   protected Vector position;
   protected int[] colour = new int[] {255, 255, 255};
 
-  public Atom(float mass, float radius, float[] position) {
+  public Atom(float[] position, float radius, float mass) {
     if (position.length != 2) {
       throw new IllegalArgumentException(
           "expected 2 positional components, got " + position.length);

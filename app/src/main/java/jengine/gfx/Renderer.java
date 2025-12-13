@@ -24,7 +24,7 @@ public class Renderer {
   public float[] normaliseColour(int[] colour) {
     float[] normalised = new float[3];
     for (int i = 0; i < 3; i++) {
-      normalised[i] = colour[i] / 255;
+      normalised[i] = colour[i] / 255f;
     }
     return normalised;
   }

@@ -21,17 +21,15 @@ public class PhysicsWorld {
   }
 
   public PhysicsWorld(float[] size) {
-    if (size.length != 2) {
+    if (size.length != 2)
       throw new IllegalArgumentException();
-    }
     width = size[0];
     height = size[1];
   }
 
   public PhysicsWorld(int[] size) {
-    if (size.length != 2) {
+    if (size.length != 2)
       throw new IllegalArgumentException();
-    }
     width = (float) size[0];
     height = (float) size[1];
   }
@@ -45,9 +43,8 @@ public class PhysicsWorld {
   }
 
   public boolean addObject(Atom atom) {
-    if (atom == null) {
+    if (atom == null)
       return false;
-    }
     objects.add(atom);
     return true;
   }
@@ -73,9 +70,8 @@ public class PhysicsWorld {
   }
 
   public void setGravity(float[] gravity) {
-    if (gravity.length != 2) {
+    if (gravity.length != 2)
       throw new IllegalArgumentException("expected 2 components, got " + gravity.length);
-    }
     this.gravity = gravity;
   }
 
@@ -84,7 +80,9 @@ public class PhysicsWorld {
   }
 
   public void step(float dt, int subSteps) {
-    float subdt = dt / subSteps;
+    if (dt < 0 || subSteps <= 0)
+      throw new IllegalArgumentException();
+    float subdt = dt / (float) subSteps;
     for (int i = 0; i < subSteps; i++) {
       applyGravity();
       updateObjects(subdt);
@@ -95,9 +93,8 @@ public class PhysicsWorld {
 
   private void applyGravity() {
     for (Atom x : objects) {
-      if (x instanceof DynamicAtom atom && atom != null) {
+      if (x instanceof DynamicAtom atom && atom != null)
         atom.accelerate(gravity);
-      }
     }
   }
 
@@ -115,16 +112,17 @@ public class PhysicsWorld {
   private void resolveCollisions() {
     for (Atom a1 : objects) {
       for (Atom a2 : objects) {
-        if (a1 == a2) {
+        if (a1 == a2)
           continue;
-        }
-        Vector delta = Vector.sub(a1.position(), a2.position());
+        Vector delta = Vector.sub(a2.position(), a1.position());
         float distance = delta.magnitude();
         float overlap = (a1.radius() + a2.radius()) - distance;
         if (overlap > 0) {
-          Vector correction = delta.normalise().scale(overlap / 2);
-          a1.position().sub(correction);
-          a2.position().add(correction);
+          Vector correction = delta.normalise().scale(overlap / 2f);
+          if (a1 instanceof DynamicAtom)
+            a1.position().sub(correction);
+          if (a2 instanceof DynamicAtom)
+            a2.position().add(correction);
         }
       }
     }
@@ -140,7 +138,6 @@ public class PhysicsWorld {
           Vector vel = atom.velocity();
           atom.position().set(width - r, y);
           vel.x *= -damping;
-          // atom.velocity().set(vel); // include this line if velocity is not changing
           atom.previousPosition().set(Vector.sub(atom.position(), vel));
         } else if (x - r < 0) {
           Vector vel = atom.velocity();
