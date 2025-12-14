@@ -12,7 +12,7 @@ public class PhysicsWorld {
   private float width;
   private float height;
   private List<Atom> objects = new ArrayList<>();
-  private float[] gravity = new float[] {0f, 300f};
+  private float[] gravity = new float[] {0f, 500f};
   private float damping = 0.9f;
 
   public PhysicsWorld(float width, float height) {

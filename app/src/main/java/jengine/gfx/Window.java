@@ -1,5 +1,7 @@
 package jengine.gfx;
 
+import jengine.JEngine;
+
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
@@ -21,6 +23,7 @@ public class Window {
   private int width;
   private int height;
   private Queue<double[]> mouseClicks = new LinkedList<>();
+  private Queue<Integer> keysPressed = new LinkedList<>();
 
   public Window(int width, int height) {
     this.width = width;
@@ -44,9 +47,12 @@ public class Window {
     }
 
     glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
-      if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
+      if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
         glfwSetWindowShouldClose(window, true);
-      }
+      else if (key == GLFW_KEY_C && action == GLFW_RELEASE)
+        keysPressed.offer(JEngine.CLEAR);
+      else if (key == GLFW_KEY_P && action == GLFW_RELEASE)
+        keysPressed.offer(JEngine.PAUSE);
     });
 
     glfwSetMouseButtonCallback(window, (window, button, action, mods) -> {
@@ -94,6 +100,12 @@ public class Window {
 
   public double time() {
     return glfwGetTime();
+  }
+
+  public int getKey() {
+    if (keysPressed.isEmpty())
+      return 0;
+    return keysPressed.poll();
   }
 
   public double[] getCursorPos() {

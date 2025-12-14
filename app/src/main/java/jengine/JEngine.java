@@ -10,6 +10,10 @@ import jengine.objects.StaticAtom;
 import java.util.Random;
 
 public class JEngine {
+  public static final int CLEAR = 1;
+  public static final int PAUSE = 2;
+  public static final int OBJ_VMAX = 750;
+
   private final int targetFPS = 60;
   private final float dt = 1f / targetFPS;
   private final PhysicsWorld world;
@@ -18,8 +22,7 @@ public class JEngine {
   private final Random random = new Random();
 
   private float objectRadiusBound = 20f;
-
-  public static final int VMAX = 500;
+  private boolean paused = false;
 
   public JEngine(int width, int height) {
     world = new PhysicsWorld(width, height);
@@ -34,18 +37,44 @@ public class JEngine {
         Thread.sleep((long) (dt * 1000));
       } catch (InterruptedException e) {
       }
-      window.pollEvents();
-      float[] coords = window.mouseClicked();
-      if (coords != null) {
-        spawnObjectDynamic(coords, getRandomVelocity());
-      }
-      // check here if a certain key is pressed
-      world.step(dt, 1);
+      pollEvents();
+      if (!paused)
+        world.step(dt, 1);
       renderer.renderScene(world);
       window.swapBuffers();
     }
     window.terminate();
   }
+
+  /* event handling (user input) */
+
+  public void pollEvents() {
+    window.pollEvents();
+    pollMouseClick(window.mouseClicked());
+    pollKeyPress(window.getKey());
+  }
+
+  private void pollMouseClick(float[] coords) {
+    if (coords != null)
+      spawnObjectDynamic(coords, getRandomVelocity());
+  }
+
+  private void pollKeyPress(int key) {
+    if (key == 0)
+      return;
+    switch (key) {
+      case CLEAR: {
+        world.clear();
+        break;
+      }
+      case PAUSE: {
+        paused = !paused;
+        break;
+      }
+    }
+  }
+
+  /* object spawning */
 
   public StaticAtom spawnObjectStatic(float[] pos, float radius, float mass) {
     StaticAtom atom = new StaticAtom(pos, radius, mass);
@@ -59,13 +88,15 @@ public class JEngine {
     return atom;
   }
 
+  /* object spawn-values handling */
+
   public float getRandomRadius() {
     return random.nextFloat(2 * Atom.DEFAULT_RADIUS) - objectRadiusBound;
   }
 
   public float[] getRandomVelocity() {
-    int x = random.nextInt(VMAX);
-    int y = random.nextInt(VMAX);
+    int x = random.nextInt(2 * OBJ_VMAX) - OBJ_VMAX;
+    int y = random.nextInt(2 * OBJ_VMAX) - OBJ_VMAX;
     return scaleVelocity(new float[] {x, y});
   }
 
@@ -84,7 +115,7 @@ public class JEngine {
     return scaled;
   }
 
-  /* static object spawners */
+  /* overloading for static object spawners */
 
   public StaticAtom spawnObjectStatic(float[] pos) {
     return spawnObjectStatic(pos, Atom.DEFAULT_RADIUS, Atom.DEFAULT_MASS);
@@ -94,7 +125,7 @@ public class JEngine {
     return spawnObjectStatic(pos, radius, Atom.DEFAULT_MASS);
   }
 
-  /* dynamic object spawners */
+  /* overloading for dynamic object spawners for overloading */
 
   public DynamicAtom spawnObjectDynamic(float[] pos) {
     return spawnObjectDynamic(pos, Atom.DEFAULT_RADIUS, Atom.DEFAULT_MASS);
