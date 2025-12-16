@@ -1,20 +1,30 @@
 package jengine.gfx;
 
+import jengine.Scene;
+import jengine.objects.SimObject;
 import jengine.objects.Atom;
-import jengine.physics.PhysicsWorld;
 
 public class Renderer {
+  public static final int[] WHITE = new int[] {255, 255, 255};
+  public static final int[] GRAY = new int[] {180, 180, 180};
+  public static final int[] BLACK = new int[] {0, 0, 0};
+
   private final GfxBackend gfx = new GfxBackend();
 
-  public void renderScene(PhysicsWorld world) {
+  public void renderScene(Scene scene) {
     gfx.clear();
-    for (Atom a : world.getObjects()) {
-      drawCircle(world, a.position().components(), a.radius(), a.colour());
+    for (SimObject o : scene.bgObjects()) {
+      if (o instanceof Atom a) {
+        drawCircle(a.position().components(), a.radius(), a.colour());
+      }
+    }
+    for (SimObject o : scene.objects()) {
+      if (o instanceof Atom a)
+        drawCircle(a.position().components(), a.radius(), a.colour());
     }
   }
 
-  public void drawCircle(PhysicsWorld world, float[] coordinates, float radius, int[] colour) {
-    // normalise components
+  public void drawCircle(float[] coordinates, float radius, int[] colour) {
     float x = coordinates[0];
     float y = coordinates[1];
     float[] rgb = normaliseColour(colour);
@@ -30,4 +40,8 @@ public class Renderer {
   }
 
   public void drawText(String text) {}
+
+  public void setBgColour(int[] rgb) {
+    gfx.setClearColour(normaliseColour(rgb));
+  }
 }

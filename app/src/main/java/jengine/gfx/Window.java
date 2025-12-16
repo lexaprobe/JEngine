@@ -2,15 +2,15 @@ package jengine.gfx;
 
 import jengine.JEngine;
 
-import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.glfw.GLFWVidMode;
-import org.lwjgl.opengl.GL;
-import org.lwjgl.system.MemoryStack;
-
 import java.nio.IntBuffer;
 import java.nio.DoubleBuffer;
 import java.util.Queue;
 import java.util.LinkedList;
+
+import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.opengl.GL;
+import org.lwjgl.system.MemoryStack;
 
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
@@ -33,32 +33,31 @@ public class Window {
   public void init() {
     GLFWErrorCallback.createPrint(System.err).set();
 
-    if (!glfwInit()) {
+    if (!glfwInit())
       throw new IllegalStateException("Unable to initialise GLFW");
-    }
 
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     // create the window
     window = glfwCreateWindow(width, height, "JEngine", NULL, NULL);
-    if (window == NULL) {
+    if (window == NULL)
       throw new RuntimeException("Failed to create the GLFW window");
-    }
 
     glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
       if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE)
         glfwSetWindowShouldClose(window, true);
       else if (key == GLFW_KEY_C && action == GLFW_RELEASE)
-        keysPressed.offer(JEngine.CLEAR);
+        keysPressed.offer(JEngine.ACTION_CLEAR);
       else if (key == GLFW_KEY_P && action == GLFW_RELEASE)
-        keysPressed.offer(JEngine.PAUSE);
+        keysPressed.offer(JEngine.ACTION_PAUSE);
+      else if (key == GLFW_KEY_G && action == GLFW_RELEASE)
+        keysPressed.offer(JEngine.ACTION_PULL);
     });
 
     glfwSetMouseButtonCallback(window, (window, button, action, mods) -> {
-      if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+      if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
         mouseClicks.offer(getCursorPos());
-      }
     });
 
     try (MemoryStack stack = stackPush()) {
@@ -90,6 +89,14 @@ public class Window {
     return glfwWindowShouldClose(window);
   }
 
+  public float[] centre() {
+    return new float[] {width / 2f, height / 2f};
+  }
+
+  public void setWindowTitle(String s) {
+    glfwSetWindowTitle(window, s);
+  }
+
   public void pollEvents() {
     glfwPollEvents();
   }
@@ -118,9 +125,8 @@ public class Window {
   }
 
   public float[] mouseClicked() {
-    if (mouseClicks.isEmpty()) {
+    if (mouseClicks.isEmpty())
       return null;
-    }
     double[] coords = mouseClicks.poll();
     return new float[] {(float) coords[0], (float) coords[1]};
   }

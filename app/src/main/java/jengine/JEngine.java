@@ -2,154 +2,142 @@ package jengine;
 
 import jengine.gfx.Renderer;
 import jengine.gfx.Window;
-import jengine.physics.PhysicsWorld;
 import jengine.objects.Atom;
-import jengine.objects.DynamicAtom;
 import jengine.objects.StaticAtom;
-
-import java.util.Random;
+import jengine.physics.PhysicsWorld;
 
 public class JEngine {
-  public static final int CLEAR = 1;
-  public static final int PAUSE = 2;
-  public static final int OBJ_VMAX = 750;
+  public static final int SPAWN_MANUAL = 0;
+  public static final int SPAWN_AUTO = 1;
+  public static final int SPAWN_DEFAULT = SPAWN_MANUAL;
 
-  private final int targetFPS = 60;
+  public static final int COLOUR_RAINBOW = 10;
+  public static final int COLOUR_VEL = 11;
+  public static final int COLOUR_NONE = 12;
+  public static final int COLOUR_RANDOM = 13;
+  public static final int COLOUR_DEFAULT = COLOUR_NONE;
+
+  public static final int BORDER_RECT = 20;
+  public static final int BORDER_CIRCLE = 21;
+  public static final int BORDER_NONE = 22;
+  public static final int BORDER_DEFAULT = BORDER_RECT;
+
+  public static final int ACTION_CLEAR = 100;
+  public static final int ACTION_PAUSE = 101;
+  public static final int ACTION_PULL = 102;
+
+  public static final int OBJ_VMAX = 750;
+  public static final int OBJ_LIMIT = 1000;
+
+  private final int targetFPS = 120;
   private final float dt = 1f / targetFPS;
   private final PhysicsWorld world;
   private final Renderer renderer;
+  private final Scene scene;
   private final Window window;
-  private final Random random = new Random();
 
-  private float objectRadiusBound = 20f;
+  private int spawnMode = SPAWN_DEFAULT;
+  private int supSteps = 2;
   private boolean paused = false;
 
   public JEngine(int width, int height) {
     world = new PhysicsWorld(width, height);
     renderer = new Renderer();
+    scene = new Scene();
     window = new Window(width, height);
+    window.init();
+  }
+
+  public void setSpawnMode(int mode) {
+    spawnMode = mode;
+  }
+
+  public void setColourMode(int mode) {
+    scene.setColourMode(mode);
+  }
+
+  public void setBorderMode(int mode) {
+    world.setBorder(mode);
+    if (mode == BORDER_CIRCLE) {
+      renderer.setBgColour(Renderer.GRAY);
+      StaticAtom circle = new StaticAtom(window.centre(), world.width() / 2.5f, 1);
+      circle.paint(Renderer.BLACK);
+      scene.addBgObject(circle);
+    } else {
+      renderer.setBgColour(Renderer.BLACK);
+      scene.clearBgObjects();
+    }
   }
 
   public void run() {
-    window.init();
+    int frames = 0;
+    double fps = targetFPS;
+    double previousTime = window.time();
     while (!window.shouldClose()) {
-      try {
-        Thread.sleep((long) (dt * 1000));
-      } catch (InterruptedException e) {
+      double currentTime = window.time();
+      frames++;
+      if (!paused && spawnMode == SPAWN_AUTO && frames % 2 == 0 && fps >= 60) {
+        Atom a = scene.spawnObjectDynamic(new float[] {5, 10}, Atom.RADIUS_SMALL,
+            scene.scaleVelocity(new float[] {295, 121}, dt));
+        a.paint(scene.getObjColour());
       }
-      pollEvents();
-      if (!paused)
-        world.step(dt, 1);
-      renderer.renderScene(world);
-      window.swapBuffers();
+      if (currentTime - previousTime >= 1.0f) {
+        fps = frames;
+        frames = 0;
+        previousTime = currentTime;
+      }
+      updateScene(fps);
     }
     window.terminate();
   }
 
-  /* event handling (user input) */
+  private void updateScene(double fps) {
+    pollEvents();
+    if (!paused)
+      world.step(scene.objects(), dt, supSteps);
+    world.setGravity(new float[] {0f, 500f});
+    renderer.renderScene(scene);
+    window.setWindowTitle("FPS: " + (int) fps + " | Objects: " + scene.numObjects());
+    window.swapBuffers();
+  }
 
-  public void pollEvents() {
+  private void pollEvents() {
     window.pollEvents();
-    pollMouseClick(window.mouseClicked());
+    if (spawnMode == SPAWN_MANUAL)
+      pollMouseClick(window.mouseClicked());
     pollKeyPress(window.getKey());
   }
 
   private void pollMouseClick(float[] coords) {
-    if (coords != null)
-      spawnObjectDynamic(coords, getRandomVelocity());
+    if (coords == null)
+      return;
+    Atom a = scene.spawnObjectDynamic(coords, scene.getRandomRadius(), scene.getRandomVelocity(dt));
+    a.paint(scene.getObjColour());
   }
 
   private void pollKeyPress(int key) {
     if (key == 0)
       return;
     switch (key) {
-      case CLEAR: {
-        world.clear();
-        break;
+      case ACTION_CLEAR -> {
+        scene.clearScene();
       }
-      case PAUSE: {
+      case ACTION_PAUSE -> {
         paused = !paused;
-        break;
+      }
+      case ACTION_PULL -> {
+        float x = Util.randomInt(-10000, 10000);
+        float y = Util.randomInt(-10000, 10000);
+        world.setGravity(new float[] {x, y});
       }
     }
-  }
-
-  /* object spawning */
-
-  public StaticAtom spawnObjectStatic(float[] pos, float radius, float mass) {
-    StaticAtom atom = new StaticAtom(pos, radius, mass);
-    world.addObject(atom);
-    return atom;
-  }
-
-  public DynamicAtom spawnObjectDynamic(float[] pos, float radius, float mass, float[] vel) {
-    DynamicAtom atom = new DynamicAtom(pos, radius, mass, vel);
-    world.addObject(atom);
-    return atom;
-  }
-
-  /* object spawn-values handling */
-
-  public float getRandomRadius() {
-    return random.nextFloat(2 * Atom.DEFAULT_RADIUS) - objectRadiusBound;
-  }
-
-  public float[] getRandomVelocity() {
-    int x = random.nextInt(2 * OBJ_VMAX) - OBJ_VMAX;
-    int y = random.nextInt(2 * OBJ_VMAX) - OBJ_VMAX;
-    return scaleVelocity(new float[] {x, y});
-  }
-
-  public int[] getRandomColour() {
-    int r = random.nextInt(256);
-    int g = random.nextInt(256);
-    int b = random.nextInt(256);
-    return new int[] {r, g, b};
-  }
-
-  public float[] scaleVelocity(float[] vel) {
-    float[] scaled = new float[2];
-    for (int i = 0; i < 2; i++) {
-      scaled[i] = (float) vel[i] * dt;
-    }
-    return scaled;
-  }
-
-  /* overloading for static object spawners */
-
-  public StaticAtom spawnObjectStatic(float[] pos) {
-    return spawnObjectStatic(pos, Atom.DEFAULT_RADIUS, Atom.DEFAULT_MASS);
-  }
-
-  public StaticAtom spawnObjectStatic(float[] pos, float radius) {
-    return spawnObjectStatic(pos, radius, Atom.DEFAULT_MASS);
-  }
-
-  /* overloading for dynamic object spawners for overloading */
-
-  public DynamicAtom spawnObjectDynamic(float[] pos) {
-    return spawnObjectDynamic(pos, Atom.DEFAULT_RADIUS, Atom.DEFAULT_MASS);
-  }
-
-  public DynamicAtom spawnObjectDynamic(float[] pos, float radius) {
-    return spawnObjectDynamic(pos, radius, Atom.DEFAULT_MASS);
-  }
-
-  public DynamicAtom spawnObjectDynamic(float[] pos, float[] vel) {
-    return spawnObjectDynamic(pos, Atom.DEFAULT_RADIUS, Atom.DEFAULT_MASS, vel);
-  }
-
-  public DynamicAtom spawnObjectDynamic(float[] pos, float radius, float[] vel) {
-    return spawnObjectDynamic(pos, radius, Atom.DEFAULT_MASS, vel);
-  }
-
-  public DynamicAtom spawnObjectDynamic(float[] pos, float radius, float mass) {
-    DynamicAtom atom = new DynamicAtom(pos, radius, mass);
-    world.addObject(atom);
-    return atom;
   }
 
   public static void main(String[] args) {
-    new JEngine(800, 800).run();
+    JEngine engine = new JEngine(800, 800);
+    engine.setSpawnMode(SPAWN_AUTO);
+    engine.setBorderMode(BORDER_RECT);
+    engine.setColourMode(COLOUR_RAINBOW);
+    engine.run();
   }
 }

@@ -1,17 +1,15 @@
 package jengine.physics;
 
-import jengine.objects.Atom;
+import jengine.JEngine;
+import jengine.objects.SimObject;
 import jengine.objects.DynamicAtom;
+
 import java.util.List;
-import java.util.ArrayList;
 
 public class PhysicsWorld {
-  public static final int RECT = 1;
-  public static final int CIRC = 2;
-
   private float width;
   private float height;
-  private List<Atom> objects = new ArrayList<>();
+  private Constraint border = null;
   private float[] gravity = new float[] {0f, 500f};
   private float damping = 0.9f;
 
@@ -42,31 +40,15 @@ public class PhysicsWorld {
     return height;
   }
 
-  public boolean addObject(Atom atom) {
-    if (atom == null)
-      return false;
-    objects.add(atom);
-    return true;
-  }
-
-  public boolean removeObject(Atom atom) {
-    if (objects.contains(atom)) {
-      objects.remove(atom);
-      return true;
-    }
-    return false;
-  }
-
-  public List<Atom> getObjects() {
-    return objects;
-  }
-
-  public void clear() {
-    objects.clear();
-  }
-
   public float[] centre() {
     return new float[] {width / 2, height / 2};
+  }
+
+  public boolean holds(SimObject o) {
+    float x = o.position().x;
+    float y = o.position().y;
+    float r = o.boundary();
+    return (x - r > width || x + r < 0 || y - r > height || y + r < 0);
   }
 
   public void setGravity(float[] gravity) {
@@ -75,31 +57,51 @@ public class PhysicsWorld {
     this.gravity = gravity;
   }
 
-  public void step(float dt) {
-    step(dt, 1);
+  public void setBorder(int type) {
+    switch (type) {
+      case JEngine.BORDER_NONE:
+        this.border = null;
+        break;
+      case JEngine.BORDER_RECT:
+        this.border = new RectangularBorder(width, height);
+        break;
+      case JEngine.BORDER_CIRCLE:
+        this.border = new CirclularBorder(width / 2.5f, centre());
+        break;
+      default:
+        throw new IllegalArgumentException("invalid border type");
+    }
   }
 
-  public void step(float dt, int subSteps) {
+  public void step(List<SimObject> objects, float dt) {
+    step(objects, dt, 1);
+  }
+
+  public void step(List<SimObject> objects, float dt, int subSteps) {
     if (dt < 0 || subSteps <= 0)
       throw new IllegalArgumentException();
     float subdt = dt / (float) subSteps;
     for (int i = 0; i < subSteps; i++) {
-      applyGravity();
-      updateObjects(subdt);
-      resolveCollisions();
-      applyConstraints();
+      applyGravity(objects);
+      updateObjects(objects, subdt);
+      for (SimObject o1 : objects) {
+        for (SimObject o2 : objects) {
+          resolveCollision(o1, o2);
+        }
+      }
+      applyConstraints(objects);
     }
   }
 
-  private void applyGravity() {
-    for (Atom x : objects) {
+  private void applyGravity(List<SimObject> objects) {
+    for (SimObject x : objects) {
       if (x instanceof DynamicAtom atom && atom != null)
         atom.accelerate(gravity);
     }
   }
 
-  private void updateObjects(float dt) {
-    for (Atom x : objects) {
+  private void updateObjects(List<SimObject> objects, float dt) {
+    for (SimObject x : objects) {
       if (x instanceof DynamicAtom atom && atom != null) {
         Vector vel = atom.velocity();
         atom.previousPosition().set(atom.position());
@@ -109,27 +111,58 @@ public class PhysicsWorld {
     }
   }
 
-  private void resolveCollisions() {
-    for (Atom a1 : objects) {
-      for (Atom a2 : objects) {
-        if (a1 == a2)
-          continue;
-        Vector delta = Vector.sub(a2.position(), a1.position());
-        float distance = delta.magnitude();
-        float overlap = (a1.radius() + a2.radius()) - distance;
-        if (overlap > 0) {
-          Vector correction = delta.normalise().scale(overlap / 2f);
-          if (a1 instanceof DynamicAtom)
-            a1.position().sub(correction);
-          if (a2 instanceof DynamicAtom)
-            a2.position().add(correction);
-        }
+  private void resolveCollision(SimObject o1, SimObject o2) {
+    if (o2 == null || o1 == o2)
+      return;
+    Vector delta = Vector.sub(o2.position(), o1.position());
+    float distance = delta.magnitude();
+    float overlap = (o1.boundary() + o2.boundary()) - distance;
+    if (overlap > 0) {
+      Vector correction = delta.normalise().scale(overlap / 2f);
+      if (o1 instanceof DynamicAtom)
+        o1.position().sub(correction);
+      if (o2 instanceof DynamicAtom)
+        o2.position().add(correction);
+    }
+  }
+
+  private void applyConstraints(List<SimObject> objects) {
+    for (SimObject o : objects) {
+      if (border != null) {
+        border.applyConstraint(o);
       }
     }
   }
 
-  private void applyConstraints() {
-    for (Atom o : objects) {
+  private abstract class Constraint {
+    abstract void applyConstraint(SimObject o);
+
+    abstract boolean inBounds(SimObject o);
+
+    abstract Vector centre();
+  }
+
+  private class RectangularBorder extends Constraint {
+    private float width;
+    private float height;
+
+    RectangularBorder(float width, float height) {
+      this.width = width;
+      this.height = height;
+    }
+
+    boolean inBounds(SimObject o) {
+      float x = o.position().x;
+      float y = o.position().y;
+      float r = o.boundary();
+      return (x + r > width || x - r < 0 || y + r > height || y - r < 0);
+    }
+
+    Vector centre() {
+      return new Vector(width / 2, height / 2);
+    }
+
+    void applyConstraint(SimObject o) {
       if (o instanceof DynamicAtom atom && atom != null) {
         float x = atom.position().x;
         float y = atom.position().y;
@@ -155,6 +188,37 @@ public class PhysicsWorld {
           vel.y *= -damping;
           atom.previousPosition().set(Vector.sub(atom.position(), vel));
         }
+      }
+    }
+  }
+
+  private class CirclularBorder extends Constraint {
+    private float radius;
+    private Vector centre;
+
+    CirclularBorder(float radius, float[] centre) {
+      if (centre.length != 2)
+        throw new IllegalArgumentException();
+      this.radius = radius;
+      this.centre = new Vector(centre);
+    }
+
+    boolean inBounds(SimObject o) {
+      Vector origin = Vector.sub(o.position(), centre);
+      return (origin.magnitude() > radius - o.boundary());
+    }
+
+    Vector centre() {
+      return centre;
+    }
+
+    void applyConstraint(SimObject o) {
+      Vector origin = Vector.sub(o.position(), centre);
+      float distance = origin.magnitude();
+      if (distance > radius - o.boundary()) {
+        origin.normalise();
+        origin.scale(radius - o.boundary());
+        o.position().set(Vector.add(centre, origin));
       }
     }
   }

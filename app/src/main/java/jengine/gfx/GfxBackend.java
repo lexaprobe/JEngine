@@ -8,8 +8,12 @@ class GfxBackend {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
 
+  public void setClearColour(float[] colour) {
+    glClearColor(colour[0], colour[1], colour[2], 1);
+  }
+
   public void drawCircle(float x, float y, float radius, float[] colour) {
-    int steps = 100;
+    int steps = 25;
     float angle = (float) Math.PI * 2 / steps;
     float prevX = x;
     float prevY = y - radius;

@@ -1,24 +1,20 @@
 package jengine.objects;
 
-import jengine.physics.Vector;
-
-public abstract class Atom {
-  public static float DEFAULT_RADIUS = 30f;
-  public static float DEFAULT_MASS = 1f;
+public abstract class Atom extends SimObject {
+  public static final float RADIUS_MAX = 100f;
+  public static final float RADIUS_MIN = 2f;
+  public static final float RADIUS_DEFAULT = 30f;
+  public static final float RADIUS_LARGE = 50f;
+  public static final float RADIUS_SMALL = 5f;
+  public static final float MASS_DEFAULT = 1f;
 
   protected float mass;
   protected float radius;
-  protected Vector position;
-  protected int[] colour = new int[] {255, 255, 255};
 
   public Atom(float[] position, float radius, float mass) {
-    if (position.length != 2) {
-      throw new IllegalArgumentException(
-          "expected 2 positional components, got " + position.length);
-    }
-    this.mass = mass;
+    super(position);
     this.radius = radius;
-    this.position = new Vector(position);
+    this.mass = mass;
   }
 
   public float mass() {
@@ -29,34 +25,18 @@ public abstract class Atom {
     return radius;
   }
 
-  public Vector position() {
-    return position;
+  @Override
+  public float width() {
+    return radius * 2;
   }
 
-  public int[] colour() {
-    return colour;
+  @Override
+  public float height() {
+    return radius * 2;
   }
 
-  public float distanceTo(Atom x) {
-    if (x == null) {
-      return 0f;
-    }
-    Vector p1 = this.position();
-    Vector p2 = x.position();
-    float xDiff = p2.x - p1.x;
-    float yDiff = p2.y = p1.y;
-    double distance = Math.sqrt(Math.pow(xDiff, 2) + Math.pow(yDiff, 2));
-    return (float) distance;
+  @Override
+  public float boundary() {
+    return radius;
   }
-
-  public void paint(int[] rgb) {
-    if (rgb.length != 3) {
-      throw new IllegalArgumentException("expected 3 values in RGB, got " + rgb.length);
-    }
-    for (int value : rgb) {
-      value = value % 256;
-    }
-    this.colour = rgb;
-  }
-
 }
