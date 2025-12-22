@@ -17,6 +17,26 @@ public abstract class Atom extends SimObject {
     this.mass = mass;
   }
 
+  @Override
+  public float minX() {
+    return position.x - radius;
+  }
+
+  @Override
+  public float minY() {
+    return position.y - radius;
+  }
+
+  @Override
+  public float maxX() {
+    return position.x + radius;
+  }
+
+  @Override
+  public float maxY() {
+    return position.y + radius;
+  }
+
   public float mass() {
     return mass;
   }

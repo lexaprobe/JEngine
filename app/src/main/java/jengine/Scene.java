@@ -16,6 +16,7 @@ public class Scene {
 
   private int objectCount = 0;
   private float objectHue = 0f;
+  private float objectHueStep = 0.02f;
   private int colourMode = JEngine.COLOUR_DEFAULT;
 
   public void addBgObject(SimObject o) {
@@ -63,6 +64,10 @@ public class Scene {
     this.colourMode = mode;
   }
 
+  public void setObjHueStep(float step) {
+    this.objectHueStep = step;
+  }
+
   /* object spawning */
 
   public StaticAtom spawnObjectStatic(float[] pos, float radius, float mass) {
@@ -98,7 +103,7 @@ public class Scene {
         rgb[0] = (bin >> 16) & 0xFF;
         rgb[1] = (bin >> 8) & 0xFF;
         rgb[2] = bin & 0xFF;
-        objectHue += 0.02 % 1;
+        objectHue += objectHueStep % 1;
       }
       case JEngine.COLOUR_RANDOM -> {
         for (int i = 0; i < 3; i++) {

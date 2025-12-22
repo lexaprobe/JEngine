@@ -12,6 +12,7 @@ public class PhysicsWorld {
   private Constraint border = null;
   private float[] gravity = new float[] {0f, 500f};
   private float damping = 0.9f;
+  private Grid grid = new Grid(50f);
 
   public PhysicsWorld(float width, float height) {
     this.width = width;
@@ -73,34 +74,30 @@ public class PhysicsWorld {
     }
   }
 
-  public void step(List<SimObject> objects, float dt) {
+  public void step(List<? extends SimObject> objects, float dt) {
     step(objects, dt, 1);
   }
 
-  public void step(List<SimObject> objects, float dt, int subSteps) {
+  public void step(List<? extends SimObject> objects, float dt, int subSteps) {
     if (dt < 0 || subSteps <= 0)
       throw new IllegalArgumentException();
     float subdt = dt / (float) subSteps;
     for (int i = 0; i < subSteps; i++) {
       applyGravity(objects);
       updateObjects(objects, subdt);
-      for (SimObject o1 : objects) {
-        for (SimObject o2 : objects) {
-          resolveCollision(o1, o2);
-        }
-      }
+      solveCollisionGrid(objects);
       applyConstraints(objects);
     }
   }
 
-  private void applyGravity(List<SimObject> objects) {
+  private void applyGravity(List<? extends SimObject> objects) {
     for (SimObject x : objects) {
       if (x instanceof DynamicAtom atom && atom != null)
         atom.accelerate(gravity);
     }
   }
 
-  private void updateObjects(List<SimObject> objects, float dt) {
+  private void updateObjects(List<? extends SimObject> objects, float dt) {
     for (SimObject x : objects) {
       if (x instanceof DynamicAtom atom && atom != null) {
         Vector vel = atom.velocity();
@@ -111,9 +108,18 @@ public class PhysicsWorld {
     }
   }
 
-  private void resolveCollision(SimObject o1, SimObject o2) {
-    if (o2 == null || o1 == o2)
-      return;
+  private void solveCollisionGrid(List<? extends SimObject> objects) {
+    grid.rebuild(objects);
+    grid.forEach((i, j) -> {
+      SimObject o1 = objects.get(i);
+      SimObject o2 = objects.get(j);
+      resolveCollision(o1, o2);
+    });
+  }
+
+  private boolean resolveCollision(SimObject o1, SimObject o2) {
+    if (o1 == null || o2 == null || o1 == o2)
+      return false;
     Vector delta = Vector.sub(o2.position(), o1.position());
     float distance = delta.magnitude();
     float overlap = (o1.boundary() + o2.boundary()) - distance;
@@ -123,10 +129,12 @@ public class PhysicsWorld {
         o1.position().sub(correction);
       if (o2 instanceof DynamicAtom)
         o2.position().add(correction);
+      return true;
     }
+    return false;
   }
 
-  private void applyConstraints(List<SimObject> objects) {
+  private void applyConstraints(List<? extends SimObject> objects) {
     for (SimObject o : objects) {
       if (border != null) {
         border.applyConstraint(o);

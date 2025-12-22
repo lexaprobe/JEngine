@@ -24,7 +24,6 @@ public class JEngine {
 
   public static final int ACTION_CLEAR = 100;
   public static final int ACTION_PAUSE = 101;
-  public static final int ACTION_PULL = 102;
 
   public static final int OBJ_VMAX = 750;
   public static final int OBJ_LIMIT = 1000;
@@ -69,6 +68,10 @@ public class JEngine {
     }
   }
 
+  public void setHueCycle(double step) {
+    scene.setObjHueStep((float) step);
+  }
+
   public void run() {
     int frames = 0;
     double fps = targetFPS;
@@ -95,7 +98,6 @@ public class JEngine {
     pollEvents();
     if (!paused)
       world.step(scene.objects(), dt, supSteps);
-    world.setGravity(new float[] {0f, 500f});
     renderer.renderScene(scene);
     window.setWindowTitle("FPS: " + (int) fps + " | Objects: " + scene.numObjects());
     window.swapBuffers();
@@ -125,11 +127,6 @@ public class JEngine {
       case ACTION_PAUSE -> {
         paused = !paused;
       }
-      case ACTION_PULL -> {
-        float x = Util.randomInt(-10000, 10000);
-        float y = Util.randomInt(-10000, 10000);
-        world.setGravity(new float[] {x, y});
-      }
     }
   }
 
@@ -138,6 +135,7 @@ public class JEngine {
     engine.setSpawnMode(SPAWN_AUTO);
     engine.setBorderMode(BORDER_RECT);
     engine.setColourMode(COLOUR_RAINBOW);
+    engine.setHueCycle(0.002);
     engine.run();
   }
 }

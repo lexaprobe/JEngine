@@ -51,8 +51,6 @@ public class Window {
         keysPressed.offer(JEngine.ACTION_CLEAR);
       else if (key == GLFW_KEY_P && action == GLFW_RELEASE)
         keysPressed.offer(JEngine.ACTION_PAUSE);
-      else if (key == GLFW_KEY_G && action == GLFW_RELEASE)
-        keysPressed.offer(JEngine.ACTION_PULL);
     });
 
     glfwSetMouseButtonCallback(window, (window, button, action, mods) -> {

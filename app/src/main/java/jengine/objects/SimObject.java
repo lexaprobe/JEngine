@@ -9,6 +9,14 @@ public abstract class SimObject {
   protected float height;
   protected int[] colour = Renderer.WHITE;
 
+  public abstract float minX();
+
+  public abstract float minY();
+
+  public abstract float maxX();
+
+  public abstract float maxY();
+
   public SimObject(float[] position) {
     if (position.length != 2) {
       throw new IllegalArgumentException(

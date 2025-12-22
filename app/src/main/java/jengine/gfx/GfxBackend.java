@@ -13,7 +13,7 @@ class GfxBackend {
   }
 
   public void drawCircle(float x, float y, float radius, float[] colour) {
-    int steps = 25;
+    int steps = 3;
     float angle = (float) Math.PI * 2 / steps;
     float prevX = x;
     float prevY = y - radius;
