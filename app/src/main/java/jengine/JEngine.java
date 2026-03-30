@@ -135,7 +135,6 @@ public class JEngine {
     engine.setSpawnMode(SPAWN_AUTO);
     engine.setBorderMode(BORDER_RECT);
     engine.setColourMode(COLOUR_RAINBOW);
-    engine.setHueCycle(0.002);
     engine.run();
   }
 }

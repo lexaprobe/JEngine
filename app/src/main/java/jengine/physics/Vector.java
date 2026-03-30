@@ -90,6 +90,15 @@ public class Vector {
   }
 
   /**
+   * Compute the square of the magnitude (length) of this Vector.
+   * 
+   * @return length squared
+   */
+  public float lengthSquared() {
+    return x * x + y * y;
+  }
+
+  /**
    * Set the components of this Vector to some value.
    * 
    * @param x

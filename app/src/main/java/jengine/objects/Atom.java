@@ -17,6 +17,14 @@ public abstract class Atom extends SimObject {
     this.mass = mass;
   }
 
+  public float mass() {
+    return mass;
+  }
+
+  public float radius() {
+    return radius;
+  }
+
   @Override
   public float minX() {
     return position.x - radius;
@@ -35,14 +43,6 @@ public abstract class Atom extends SimObject {
   @Override
   public float maxY() {
     return position.y + radius;
-  }
-
-  public float mass() {
-    return mass;
-  }
-
-  public float radius() {
-    return radius;
   }
 
   @Override

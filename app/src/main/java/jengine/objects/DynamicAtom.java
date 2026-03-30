@@ -23,12 +23,12 @@ public class DynamicAtom extends Atom {
     return previousPosition;
   }
 
-  public Vector acceleration() {
-    return acceleration;
-  }
-
   public Vector velocity() {
     return Vector.sub(position, previousPosition);
+  }
+
+  public Vector acceleration() {
+    return acceleration;
   }
 
   public void accelerate(float[] components) {
