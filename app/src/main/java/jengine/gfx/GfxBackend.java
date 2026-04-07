@@ -34,4 +34,14 @@ class GfxBackend {
       prevY = newY;
     }
   }
+
+  public void drawRectangle(float x, float y, float width, float height, float[] colour) {
+    glColor3f(colour[0], colour[1], colour[2]);
+    glBegin(GL_QUADS);
+    glVertex2f(x, y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + width);
+    glVertex2f(x, y + width);
+    glEnd();
+  }
 }

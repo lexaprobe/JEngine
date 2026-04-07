@@ -2,6 +2,7 @@ package jengine.physics;
 
 import jengine.JEngine;
 import jengine.objects.SimObject;
+import jengine.objects.Atom;
 import jengine.objects.DynamicAtom;
 
 import java.util.List;
@@ -10,13 +11,17 @@ public class PhysicsWorld {
   private float width;
   private float height;
   private Constraint border = null;
-  private float[] gravity = new float[] {0f, 500f};
+  private float[] uniformGravity = new float[] {0f, 500f};
+  private float[] pointGravity;
+  private int gravityMode = JEngine.GRAVITY_DEFAULT;
+  private float gravityStrength = 10000;
   private float damping = 0.9f;
   private Grid grid = new Grid(50f);
 
   public PhysicsWorld(float width, float height) {
     this.width = width;
     this.height = height;
+    pointGravity = centre();
   }
 
   public PhysicsWorld(float[] size) {
@@ -52,10 +57,24 @@ public class PhysicsWorld {
     return (x - r > width || x + r < 0 || y - r > height || y + r < 0);
   }
 
-  public void setGravity(float[] gravity) {
+  public void setGravityMode(int mode) {
+    gravityMode = mode;
+  }
+
+  public void setGravityStrength(float multiplier) {
+    gravityStrength *= multiplier;
+  }
+
+  public void setUniformGravity(float[] gravity) {
     if (gravity.length != 2)
       throw new IllegalArgumentException("expected 2 components, got " + gravity.length);
-    this.gravity = gravity;
+    uniformGravity = gravity;
+  }
+
+  public void setPointGravity(float[] point) {
+    if (point.length != 2)
+      throw new IllegalArgumentException("expected 2 components, got" + point.length);
+    pointGravity = point;
   }
 
   public void setBorder(int type) {
@@ -83,17 +102,39 @@ public class PhysicsWorld {
       throw new IllegalArgumentException();
     float subdt = dt / (float) subSteps;
     for (int i = 0; i < subSteps; i++) {
-      applyGravity(objects);
+      switch (gravityMode) {
+        case JEngine.GRAVITY_POINT:
+          applyPointGravity(objects);
+          break;
+        default:
+          applyUniformGravity(objects);
+          break;
+      }
       updateObjects(objects, subdt);
       solveCollisionGrid(objects);
       applyConstraints(objects);
     }
   }
 
-  private void applyGravity(List<? extends SimObject> objects) {
+  private void applyUniformGravity(List<? extends SimObject> objects) {
     for (SimObject x : objects) {
-      if (x instanceof DynamicAtom atom && atom != null)
-        atom.accelerate(gravity);
+      if (x instanceof DynamicAtom atom && atom != null) {
+        atom.accelerate(uniformGravity);
+      }
+    }
+  }
+
+  private void applyPointGravity(List<? extends SimObject> objects) {
+    Vector target = new Vector(pointGravity);
+    for (SimObject x : objects) {
+      if (x instanceof DynamicAtom atom && atom != null) {
+        Vector direction = Vector.sub(target, atom.position());
+        float distance = direction.magnitude();
+        if (distance > 0.0001f) {
+          direction.normalise();
+          atom.accelerate(direction.scale(gravityStrength / Math.max(distance, Atom.RADIUS_MIN)));
+        }
+      }
     }
   }
 

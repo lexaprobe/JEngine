@@ -95,6 +95,10 @@ public class Scene {
         new float[] {Util.randomInt(0, JEngine.OBJ_VMAX), Util.randomInt(0, JEngine.OBJ_VMAX)}, dt);
   }
 
+  public int colourMode() {
+    return colourMode;
+  }
+
   public int[] getObjColour() {
     int[] rgb = new int[] {255, 255, 255};
     switch (colourMode) {
