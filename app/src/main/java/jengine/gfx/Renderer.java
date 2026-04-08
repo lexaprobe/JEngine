@@ -1,36 +1,32 @@
 package jengine.gfx;
 
-import jengine.JEngine;
-import jengine.Scene;
-import jengine.objects.SimObject;
-import jengine.objects.Rectangle;
 import jengine.objects.Atom;
-import jengine.objects.DynamicAtom;
+import jengine.objects.VerletObject;
+
+import java.util.List;
 
 public class Renderer {
   public static final int[] WHITE = new int[] {255, 255, 255};
   public static final int[] GRAY = new int[] {180, 180, 180};
   public static final int[] BLACK = new int[] {0, 0, 0};
 
-  private final GfxBackend gfx = new GfxBackend();
+  private final Window window;
 
-  public void renderScene(Scene scene) {
-    gfx.clear();
-    for (SimObject o : scene.bgObjects()) {
-      if (o instanceof Atom a) {
-        drawCircle(a.position().components(), a.radius(), a.colour());
-      } else if (o instanceof Rectangle x) {
-        drawRectangle(x.position().components(), x.width(), x.height(), x.colour());
-      }
-    }
-    for (SimObject o : scene.objects()) {
-      if (o instanceof Atom a) {
-        int[] colour = a.colour();
-        if (a instanceof DynamicAtom d && scene.colourMode() == JEngine.COLOUR_VEL) {
-          float value = Math.clamp(d.velocity().magnitude(), 0, 1f);
-          colour = new int[] {(int) (value * 255), 0, (int) (255 * (1f - value))};
-        }
-        drawCircle(a.position().components(), a.radius(), colour);
+  private int width;
+  private int height;
+
+  public Renderer(int width, int height) {
+    window = new Window(width, height);
+    this.width = width;
+    this.height = height;
+    window.init();
+  }
+
+  public void renderObjects(List<VerletObject> objects) {
+    Graphics.clear();
+    for (VerletObject o : objects) {
+      if (o instanceof Atom atom) {
+        drawCircle(atom.position().components(), atom.radius(), atom.colour());
       }
     }
   }
@@ -39,14 +35,14 @@ public class Renderer {
     float x = position[0];
     float y = position[1];
     float[] rgb = normaliseColour(colour);
-    gfx.drawCircle(x, y, radius, rgb);
+    Graphics.drawCircle(x, y, radius, rgb);
   }
 
   public void drawRectangle(float[] position, float width, float height, int[] colour) {
     float x = position[0];
     float y = position[1];
     float[] rgb = normaliseColour(colour);
-    gfx.drawRectangle(x, y, width, height, rgb);
+    Graphics.drawRectangle(x, y, width, height, rgb);
   }
 
   public float[] normaliseColour(int[] colour) {
@@ -60,6 +56,46 @@ public class Renderer {
   public void drawText(String text) {}
 
   public void setBgColour(int[] rgb) {
-    gfx.setClearColour(normaliseColour(rgb));
+    Graphics.setClearColour(normaliseColour(rgb));
+  }
+
+  public float windowWidth() {
+    return width;
+  }
+
+  public float windowHeight() {
+    return height;
+  }
+
+  public double time() {
+    return window.time();
+  }
+
+  public boolean shouldClose() {
+    return window.shouldClose();
+  }
+
+  public void terminate() {
+    window.terminate();
+  }
+
+  public void setWindowTitle(String title) {
+    window.setWindowTitle(title);
+  }
+
+  public void swapBuffers() {
+    window.swapBuffers();
+  }
+
+  public void pollEvents() {
+    window.pollEvents();
+  }
+
+  public float[] mouseClicked() {
+    return window.mouseClicked();
+  }
+
+  public int getKey() {
+    return window.getKey();
   }
 }

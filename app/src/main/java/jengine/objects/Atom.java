@@ -1,28 +1,38 @@
 package jengine.objects;
 
-public abstract class Atom extends SimObject {
+import jengine.physics.Vector;
+
+public class Atom extends VerletObject {
   public static final float RADIUS_MAX = 100f;
   public static final float RADIUS_MIN = 2f;
   public static final float RADIUS_DEFAULT = 30f;
   public static final float RADIUS_LARGE = 50f;
   public static final float RADIUS_SMALL = 5f;
-  public static final float MASS_DEFAULT = 1f;
 
-  protected float mass;
-  protected float radius;
+  private float radius = RADIUS_DEFAULT;
 
-  public Atom(float[] position, float radius, float mass) {
-    super(position);
+  public Atom(Vector position, Vector velocity, float mass, float radius, int[] colour) {
+    super(position, velocity, mass, colour);
     this.radius = radius;
-    this.mass = mass;
   }
 
-  public float mass() {
-    return mass;
+  public Atom(Vector position, Vector velocity, float mass, float radius) {
+    this(position, velocity, mass, radius, VerletObject.COLOUR_DEFAULT);
+  }
+
+  public Atom(Vector position, float mass, float radius) {
+    this(position, new Vector(), mass, radius, VerletObject.COLOUR_DEFAULT);
   }
 
   public float radius() {
     return radius;
+  }
+
+  public void setRadius(float radius) {
+    if (radius < 0) {
+      throw new IllegalArgumentException("negative radius");
+    }
+    this.radius = radius;
   }
 
   @Override
@@ -46,17 +56,17 @@ public abstract class Atom extends SimObject {
   }
 
   @Override
+  public float boundary() {
+    return radius;
+  }
+
+  @Override
   public float width() {
-    return radius * 2;
+    return radius * 2f;
   }
 
   @Override
   public float height() {
-    return radius * 2;
-  }
-
-  @Override
-  public float boundary() {
-    return radius;
+    return radius * 2f;
   }
 }

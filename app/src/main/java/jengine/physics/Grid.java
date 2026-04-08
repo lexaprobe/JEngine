@@ -1,6 +1,6 @@
 package jengine.physics;
 
-import jengine.objects.SimObject;
+import jengine.objects.VerletObject;
 
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -20,11 +20,11 @@ class Grid {
     this.cells = new Int2ObjectOpenHashMap<>();
   }
 
-  public void rebuild(List<? extends SimObject> objects) {
+  public void rebuild(List<? extends VerletObject> objects) {
     cells.clear();
     // we use index-based iteration because we want to store the index of an object in a cell
     for (int i = 0; i < objects.size(); i++) {
-      SimObject o = objects.get(i);
+      VerletObject o = objects.get(i);
       if (o == null)
         continue;
       int minX = worldToCell(o.minX());

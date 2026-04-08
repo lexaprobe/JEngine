@@ -216,6 +216,17 @@ public class Vector {
     return this;
   }
 
+  /**
+   * Calculate the euclidean distance between this and another Vector.
+   *
+   * @param vector a Vector object
+   * @return the distance
+   */
+  public float distanceTo(Vector vector) {
+    Vector diff = Vector.sub(this, vector);
+    return diff.magnitude();
+  }
+
   @Override
   public Vector clone() {
     return new Vector(this.x, this.y);

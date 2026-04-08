@@ -1,18 +1,15 @@
 package jengine;
 
+import java.util.ArrayList;
+import java.util.List;
 import jengine.gfx.Renderer;
-import jengine.gfx.Window;
 import jengine.objects.Atom;
-import jengine.objects.DynamicAtom;
-import jengine.objects.Rectangle;
+import jengine.objects.VerletObject;
 import jengine.physics.Vector;
 import jengine.physics.PhysicsWorld;
 
 public class JEngine {
-  public static final int SPAWN_MANUAL = 0;
-  public static final int SPAWN_AUTO = 1;
-  public static final int SPAWN_DEFAULT = SPAWN_MANUAL;
-
+  /* Engine settings */
   public static final int COLOUR_RAINBOW = 10;
   public static final int COLOUR_VEL = 11;
   public static final int COLOUR_NONE = 12;
@@ -24,92 +21,83 @@ public class JEngine {
   public static final int BORDER_NONE = 22;
   public static final int BORDER_DEFAULT = BORDER_RECT;
 
-  public static final int GRAVITY_UNIFORM = 30;
-  public static final int GRAVITY_POINT = 31;
-  public static final int GRAVITY_DEFAULT = GRAVITY_UNIFORM;
-
-  public static final int LOCATION_TOP_LEFT = 40;
-  public static final int LOCATION_PENDULUM = 41;
-  public static final int LOCATION_DEFAULT = LOCATION_TOP_LEFT;
-
   public static final int ACTION_CLEAR = 100;
   public static final int ACTION_PAUSE = 101;
   public static final int ACTION_TOGGLE_SPAWN = 102;
   public static final int ACTION_GRAVITATE = 103;
 
   public static final int OBJ_VMAX = 750;
-  public static final int OBJ_LIMIT = 1000;
+  public static final int OBJ_LIMIT = 10000;
 
-  private final int targetFPS = 120;
-  private final float dt = 1f / targetFPS;
+  /* Engine components */
   private final PhysicsWorld world;
   private final Renderer renderer;
   private final Scene scene;
-  private final Window window;
+  private final Pendulum pendulum;
 
-  private int spawnMode = SPAWN_DEFAULT;
-  private int spawnLocation = LOCATION_DEFAULT;
-  private int supSteps = 2;
-  private boolean spawn = true;
-  private boolean paused = false;
-  private boolean gravitating = false;
-  private float theta = -0.9f;
-  private boolean angleIncreasing = true;
+  /* User-defined variables */
+  private float targetFPS = 120;
+  private int simulationSubSteps = 2;
+  private int colourMode = COLOUR_DEFAULT;
 
-  public JEngine(int width, int height) {
-    world = new PhysicsWorld(width, height);
-    renderer = new Renderer();
+  /* Simulation toggles */
+  private boolean toggleSpawn = true;
+  private boolean togglePause = false;
+  private boolean toggleGravity = false;
+
+  public JEngine(int width, int height, int borderMode) {
+    float[] centre = new float[] {width / 2f, height / 2f};
+    switch (borderMode) {
+      case BORDER_NONE:
+        world = new PhysicsWorld(centre);
+        break;
+      case BORDER_CIRCLE:
+        world = new PhysicsWorld(centre, width / 2.5f);
+        break;
+      default:
+        world = new PhysicsWorld(centre, width, height);
+    }
+    renderer = new Renderer(width, height);
     scene = new Scene();
-    window = new Window(width, height);
-    // Rectangle footer = new Rectangle(new float[] {0, height}, width, 100);
-    // footer.paint(Renderer.GRAY);
-    // scene.addBgObject(footer);
-    window.init();
+    pendulum = new Pendulum(0.9f, 0.005f);
   }
 
-  public void setSpawnMode(int mode) {
-    spawnMode = mode;
+  public void setTargetFPS(int fps) {
+    if (fps <= 0) {
+      throw new IllegalArgumentException("FPS must be greater than 0");
+    }
+    targetFPS = fps;
   }
 
-  public void setSpawnLocation(int mode) {
-    spawnLocation = mode;
+  public void setSubSteps(int subSteps) {
+    if (subSteps < 1) {
+      throw new IllegalArgumentException("Sub steps must be greater than 0");
+    }
+    simulationSubSteps = subSteps;
   }
 
   public void setColourMode(int mode) {
-    scene.setColourMode(mode);
+    colourMode = mode;
   }
 
-  public void setBorderMode(int mode) {
-    world.setBorder(mode);
-    if (mode == BORDER_CIRCLE) {
-      spawnLocation = LOCATION_PENDULUM;
-    }
+  public PhysicsWorld world() {
+    return world;
   }
 
-  public void setHueCycle(double step) {
-    scene.setObjHueStep((float) step);
-  }
-
-  public void setGravityMode(int mode) {
-    world.setGravityMode(mode);
+  public Scene scene() {
+    return scene;
   }
 
   public void run() {
     int frames = 0;
     double fps = targetFPS;
-    double previousTime = window.time();
-    while (!window.shouldClose()) {
-      double currentTime = window.time();
+    double previousTime = renderer.time();
+    while (!renderer.shouldClose()) {
+      double currentTime = renderer.time();
       frames++;
-      if (!paused && spawn && spawnMode == SPAWN_AUTO && frames % 2 == 0 && fps >= 60) {
-        switch (spawnLocation) {
-          case LOCATION_PENDULUM:
-            spawnPendulum();
-            break;
-          case LOCATION_TOP_LEFT:
-            spawnTopLeft();
-            break;
-        }
+      if (!togglePause && !toggleSpawn && frames % 2 == 0) {
+        pendulum.step();
+        pendulum.spawnAtom();
       }
       if (currentTime - previousTime >= 1.0f) {
         fps = frames;
@@ -118,30 +106,34 @@ public class JEngine {
       }
       updateScene(fps);
     }
-    window.terminate();
+    renderer.terminate();
   }
 
-  private void updateScene(double fps) {
+  private void updateScene(double currentFPS) {
     pollEvents();
-    if (!paused)
-      world.step(scene.objects(), dt, supSteps);
-    renderer.renderScene(scene);
-    window.setWindowTitle("FPS: " + (int) fps + " | Objects: " + scene.numObjects());
-    window.swapBuffers();
+    if (!togglePause)
+      world.step(scene.objects(), 1f / targetFPS, simulationSubSteps);
+    renderer.renderObjects(scene.objects());
+    renderer.setWindowTitle("FPS: " + (int) currentFPS + " | Objects: " + scene.numObjects());
+    renderer.swapBuffers();
   }
 
   private void pollEvents() {
-    window.pollEvents();
-    if (spawnMode == SPAWN_MANUAL)
-      pollMouseClick(window.mouseClicked());
-    pollKeyPress(window.getKey());
+    renderer.pollEvents();
+    pollMouseClick(renderer.mouseClicked());
+    pollKeyPress(renderer.getKey());
   }
 
   private void pollMouseClick(float[] coords) {
     if (coords == null)
       return;
-    Atom a = scene.spawnObjectDynamic(coords, scene.getRandomRadius(), scene.getRandomVelocity(dt));
-    a.paint(scene.getObjColour());
+    // Vector vel = Util.randomVector(OBJ_VMAX).scale(1f / targetFPS);
+    Vector vel = new Vector();
+    // float mass = Util.randomFloat(0, Float.MAX_VALUE);
+    float mass = VerletObject.MASS_DEFAULT;
+    float radius = Util.randomFloat(Atom.RADIUS_MIN, Atom.RADIUS_LARGE);
+    Atom atom = new Atom(new Vector(coords), vel, mass, radius, scene.getObjColour(colourMode));
+    scene.addObject(atom);
   }
 
   private void pollKeyPress(int key) {
@@ -152,48 +144,76 @@ public class JEngine {
         scene.clearScene();
       }
       case ACTION_PAUSE -> {
-        paused = !paused;
+        togglePause = !togglePause;
       }
       case ACTION_TOGGLE_SPAWN -> {
-        spawn = !spawn;
+        toggleSpawn = !toggleSpawn;
       }
       case ACTION_GRAVITATE -> {
-        gravitating = !gravitating;
+        toggleGravity = !toggleGravity;
       }
     }
   }
 
-  private void spawnTopLeft() {
-    DynamicAtom a = scene.spawnObjectDynamic(new float[] {5, 10}, Atom.RADIUS_SMALL,
-        scene.scaleVelocity(new float[] {295, 121}, dt));
-    a.paint(scene.getObjColour());
+  public void cleanScene() {
+    List<VerletObject> toRemove = new ArrayList<>();
+    for (VerletObject o : scene.objects()) {
+      if (o == null)
+        continue;
+      float x = o.position().x;
+      float y = o.position().y;
+      float r = o.boundary();
+      if (x + r > 2 * o.maxX() + renderer.windowWidth() || x - r < -2 * o.maxX()
+          || y + r > 2 * o.maxY() + renderer.windowHeight() || y - r < -2 * o.maxY()) {
+        toRemove.add(o);
+      }
+    }
+    for (VerletObject o : toRemove) {
+      scene.removeObject(o);
+    }
   }
 
-  private void spawnPendulum() {
-    if (theta == 0.9)
-      angleIncreasing = false;
-    else if (theta == -0.9)
-      angleIncreasing = true;
-    if (angleIncreasing)
-      theta += 0.005f;
-    else
-      theta -= 0.005f;
-    DynamicAtom a = scene.spawnObjectDynamic(new float[] {world.width() / 2, world.height() / 4},
-        Atom.RADIUS_SMALL);
-    float xvel = a.mass() * 500f * (float) Math.sin(theta);
-    float yvel = Math.abs(a.mass() * 500f * (float) Math.cos(theta));
-    a.previousPosition().set(
-        Vector.sub(a.position(), new Vector(scene.scaleVelocity(new float[] {xvel, yvel}, dt))));
-    a.paint(scene.getObjColour());
+  private class Pendulum {
+    private float theta = 0;
+    private float maxTheta;
+    private float step;
+    private boolean angleIncreasing = true;
+
+    Pendulum(float maxTheta, float step) {
+      this.maxTheta = maxTheta;
+      this.step = step;
+    }
+
+    void step() {
+      if (theta == maxTheta)
+        angleIncreasing = false;
+      else if (theta == -maxTheta)
+        angleIncreasing = true;
+      if (angleIncreasing)
+        theta += step;
+      else
+        theta -= step;
+    }
+
+    void spawnAtom() {
+      float mass = VerletObject.MASS_DEFAULT;
+      float radius = Atom.RADIUS_SMALL;
+      float xvel = mass * 300f * (float) Math.sin(theta);
+      float yvel = Math.abs(mass * 300f * (float) Math.cos(theta));
+      Vector velocity = new Vector(xvel, yvel).scale(1f / targetFPS);
+      Vector position = new Vector(world.centre());
+      position.y *= 0.2f; // move position up
+      Atom atom = new Atom(position, velocity, mass, radius, scene.getObjColour(colourMode));
+      scene.addObject(atom);
+    }
   }
 
   public static void main(String[] args) {
-    JEngine engine = new JEngine(800, 800);
-    engine.setSpawnMode(SPAWN_AUTO);
-    engine.setSpawnLocation(LOCATION_PENDULUM);
-    engine.setBorderMode(BORDER_RECT);
+    JEngine engine = new JEngine(800, 800, BORDER_RECT);
+    PhysicsWorld world = engine.world();
+    world.setGravityMode(PhysicsWorld.GRAVITY_UNIFORM);
+    world.setGravity(new Vector(0, 500));
     engine.setColourMode(COLOUR_RAINBOW);
-    engine.setGravityMode(GRAVITY_POINT);
     engine.run();
   }
 }

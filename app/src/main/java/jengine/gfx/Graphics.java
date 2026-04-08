@@ -2,17 +2,17 @@ package jengine.gfx;
 
 import static org.lwjgl.opengl.GL11.*;
 
-class GfxBackend {
+class Graphics {
 
-  public void clear() {
+  public static void clear() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
 
-  public void setClearColour(float[] colour) {
+  public static void setClearColour(float[] colour) {
     glClearColor(colour[0], colour[1], colour[2], 1);
   }
 
-  public void drawCircle(float x, float y, float radius, float[] colour) {
+  public static void drawCircle(float x, float y, float radius, float[] colour) {
     int steps = 20;
     float angle = (float) Math.PI * 2 / steps;
     float prevX = x;
@@ -35,7 +35,7 @@ class GfxBackend {
     }
   }
 
-  public void drawRectangle(float x, float y, float width, float height, float[] colour) {
+  public static void drawRectangle(float x, float y, float width, float height, float[] colour) {
     glColor3f(colour[0], colour[1], colour[2]);
     glBegin(GL_QUADS);
     glVertex2f(x, y);
