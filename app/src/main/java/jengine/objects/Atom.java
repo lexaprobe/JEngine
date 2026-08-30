@@ -3,11 +3,11 @@ package jengine.objects;
 import jengine.physics.Vector;
 
 public class Atom extends VerletObject {
-  public static final float RADIUS_MAX = 100f;
-  public static final float RADIUS_MIN = 2f;
-  public static final float RADIUS_DEFAULT = 30f;
-  public static final float RADIUS_LARGE = 50f;
-  public static final float RADIUS_SMALL = 5f;
+  public static final float RADIUS_MAX = 3f;
+  public static final float RADIUS_MIN = 0.06f;
+  public static final float RADIUS_DEFAULT = 1f;
+  public static final float RADIUS_LARGE = 1.5f;
+  public static final float RADIUS_SMALL = 0.15f;
 
   private float radius = RADIUS_DEFAULT;
 

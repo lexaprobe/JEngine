@@ -28,6 +28,7 @@ public class JEngine {
 
   public static final int OBJ_VMAX = 750;
   public static final int OBJ_LIMIT = 10000;
+  public static final int METRES_PER_PIXEL = 32;
 
   /* Engine components */
   private final PhysicsWorld world;
@@ -36,37 +37,31 @@ public class JEngine {
   private final Pendulum pendulum;
 
   /* User-defined variables */
-  private float targetFPS = 120;
+  private double deltaTime = 1f / 60f;
   private int simulationSubSteps = 2;
   private int colourMode = COLOUR_DEFAULT;
 
   /* Simulation toggles */
   private boolean toggleSpawn = true;
   private boolean togglePause = false;
-  private boolean toggleGravity = false;
 
   public JEngine(int width, int height, int borderMode) {
-    float[] centre = new float[] {width / 2f, height / 2f};
+    renderer = new Renderer(width, height);
+    float scaledWidth = width / METRES_PER_PIXEL;
+    float scaledHeight = width / METRES_PER_PIXEL;
+    float[] centre = new float[] {scaledWidth / 2f, scaledHeight / 2f};
     switch (borderMode) {
       case BORDER_NONE:
         world = new PhysicsWorld(centre);
         break;
       case BORDER_CIRCLE:
-        world = new PhysicsWorld(centre, width / 2.5f);
+        world = new PhysicsWorld(centre, scaledWidth / 2.5f);
         break;
       default:
-        world = new PhysicsWorld(centre, width, height);
+        world = new PhysicsWorld(centre, scaledWidth, scaledHeight);
     }
-    renderer = new Renderer(width, height);
     scene = new Scene();
     pendulum = new Pendulum(0.9f, 0.005f);
-  }
-
-  public void setTargetFPS(int fps) {
-    if (fps <= 0) {
-      throw new IllegalArgumentException("FPS must be greater than 0");
-    }
-    targetFPS = fps;
   }
 
   public void setSubSteps(int subSteps) {
@@ -90,49 +85,79 @@ public class JEngine {
 
   public void run() {
     int frames = 0;
-    double fps = targetFPS;
+    int updates = 0;
+
+    int fps = 0;
+    int ups = 0;
+
     double previousTime = renderer.time();
+    double accumulator = 0.0;
+    double currentTime;
+    double frameTime;
+
+    double timer = 0.0;
+
     while (!renderer.shouldClose()) {
-      double currentTime = renderer.time();
+      currentTime = renderer.time();
+      frameTime = currentTime - previousTime;
+      previousTime = currentTime;
+
+      accumulator += frameTime;
+      timer += frameTime;
+
+      pollEvents();
+
+      while (accumulator >= deltaTime) {
+        updateScene();
+        accumulator -= deltaTime;
+        updates++;
+      }
+
+      renderScene(fps, ups);
       frames++;
-      if (!togglePause && !toggleSpawn && frames % 2 == 0) {
-        pendulum.step();
-        pendulum.spawnAtom();
-      }
-      if (currentTime - previousTime >= 1.0f) {
+
+      if (timer >= 1.0) {
         fps = frames;
+        ups = updates;
         frames = 0;
-        previousTime = currentTime;
+        updates = 0;
+        timer = 0.0;
       }
-      updateScene(fps);
     }
     renderer.terminate();
   }
 
-  private void updateScene(double currentFPS) {
-    pollEvents();
-    if (!togglePause)
-      world.step(scene.objects(), 1f / targetFPS, simulationSubSteps);
-    renderer.renderObjects(scene.objects());
-    renderer.setWindowTitle("FPS: " + (int) currentFPS + " | Objects: " + scene.numObjects());
-    renderer.swapBuffers();
-  }
-
   private void pollEvents() {
     renderer.pollEvents();
+    // For now, any mouse click spawns an Atom at that location
     pollMouseClick(renderer.mouseClicked());
     pollKeyPress(renderer.getKey());
+  }
+
+  private void updateScene() {
+    if (!togglePause) {
+      world.step(scene.objects(), deltaTime, simulationSubSteps);
+      if (!toggleSpawn) {
+        pendulum.step();
+        pendulum.spawnAtom();
+      }
+    }
+  }
+
+  private void renderScene(int fps, int ups) {
+    renderer.renderObjects(scene.objects());
+    renderer.setWindowTitle("FPS: " + fps + " | UPS: " + ups + " | Objects: " + scene.numObjects());
+    renderer.swapBuffers();
   }
 
   private void pollMouseClick(float[] coords) {
     if (coords == null)
       return;
-    // Vector vel = Util.randomVector(OBJ_VMAX).scale(1f / targetFPS);
     Vector vel = new Vector();
-    // float mass = Util.randomFloat(0, Float.MAX_VALUE);
     float mass = VerletObject.MASS_DEFAULT;
     float radius = Util.randomFloat(Atom.RADIUS_MIN, Atom.RADIUS_LARGE);
-    Atom atom = new Atom(new Vector(coords), vel, mass, radius, scene.getObjColour(colourMode));
+    Atom atom = new Atom(new Vector(coords[0] / METRES_PER_PIXEL, coords[1] / METRES_PER_PIXEL),
+        vel, mass, radius, scene.getObjColour(colourMode));
     scene.addObject(atom);
   }
 
@@ -148,9 +173,6 @@ public class JEngine {
       }
       case ACTION_TOGGLE_SPAWN -> {
         toggleSpawn = !toggleSpawn;
-      }
-      case ACTION_GRAVITATE -> {
-        toggleGravity = !toggleGravity;
       }
     }
   }
@@ -198,9 +220,9 @@ public class JEngine {
     void spawnAtom() {
       float mass = VerletObject.MASS_DEFAULT;
       float radius = Atom.RADIUS_SMALL;
-      float xvel = mass * 300f * (float) Math.sin(theta);
-      float yvel = Math.abs(mass * 300f * (float) Math.cos(theta));
-      Vector velocity = new Vector(xvel, yvel).scale(1f / targetFPS);
+      float xvel = mass * (float) Math.sin(theta);
+      float yvel = Math.abs(mass * (float) Math.cos(theta));
+      Vector velocity = new Vector(xvel, yvel).scale(deltaTime);
       Vector position = new Vector(world.centre());
       position.y *= 0.2f; // move position up
       Atom atom = new Atom(position, velocity, mass, radius, scene.getObjColour(colourMode));
@@ -212,8 +234,7 @@ public class JEngine {
     JEngine engine = new JEngine(800, 800, BORDER_RECT);
     PhysicsWorld world = engine.world();
     world.setGravityMode(PhysicsWorld.GRAVITY_UNIFORM);
-    world.setGravity(new Vector(0, 500));
-    engine.setColourMode(COLOUR_RAINBOW);
+    world.setGravity(new Vector(0.0f, 9.81f));
     engine.run();
   }
 }

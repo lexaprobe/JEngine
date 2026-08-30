@@ -3,7 +3,7 @@ package jengine.objects;
 import jengine.physics.Vector;
 
 public abstract class VerletObject {
-  public static final float SIZE_MIN = 1f;
+  public static final float SIZE_MIN = 0.01f; // 1 cm
   public static final float MASS_DEFAULT = 1f;
   public static final int[] COLOUR_DEFAULT = new int[] {0, 0, 0};
 

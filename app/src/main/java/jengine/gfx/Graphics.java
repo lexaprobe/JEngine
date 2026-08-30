@@ -14,7 +14,7 @@ class Graphics {
 
   public static void drawCircle(float x, float y, float radius, float[] colour) {
     int steps = 20;
-    float angle = (float) Math.PI * 2 / steps;
+    float angle = (float) Math.PI * 2f / steps;
     float prevX = x;
     float prevY = y - radius;
 

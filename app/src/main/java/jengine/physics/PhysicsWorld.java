@@ -68,10 +68,14 @@ public class PhysicsWorld {
     gravityMode = mode;
   }
 
-  public void step(List<? extends VerletObject> objects, float dt, int subSteps) {
+  public void setGravityMultiplier(float multiplier) {
+    gravityStrength *= multiplier;
+  }
+
+  public void step(List<? extends VerletObject> objects, double dt, int subSteps) {
     if (dt < 0 || subSteps <= 0)
       throw new IllegalArgumentException();
-    float subdt = dt / (float) subSteps;
+    double subdt = dt / (double) subSteps;
     for (int i = 0; i < subSteps; i++) {
       switch (gravityMode) {
         case GRAVITY_POINT:
@@ -109,7 +113,7 @@ public class PhysicsWorld {
     }
   }
 
-  private void updateObjects(List<? extends VerletObject> objects, float dt) {
+  private void updateObjects(List<? extends VerletObject> objects, double dt) {
     for (VerletObject o : objects) {
       if (o == null)
         continue;

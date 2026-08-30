@@ -1,5 +1,6 @@
 package jengine.gfx;
 
+import jengine.JEngine;
 import jengine.objects.Atom;
 import jengine.objects.VerletObject;
 
@@ -17,8 +18,8 @@ public class Renderer {
 
   public Renderer(int width, int height) {
     window = new Window(width, height);
-    this.width = width;
-    this.height = height;
+    this.width = width * JEngine.METRES_PER_PIXEL;
+    this.height = height * JEngine.METRES_PER_PIXEL;
     window.init();
   }
 
@@ -32,10 +33,10 @@ public class Renderer {
   }
 
   public void drawCircle(float[] position, float radius, int[] colour) {
-    float x = position[0];
-    float y = position[1];
+    float x = position[0] * JEngine.METRES_PER_PIXEL;
+    float y = position[1] * JEngine.METRES_PER_PIXEL;
     float[] rgb = normaliseColour(colour);
-    Graphics.drawCircle(x, y, radius, rgb);
+    Graphics.drawCircle(x, y, radius * JEngine.METRES_PER_PIXEL, rgb);
   }
 
   public void drawRectangle(float[] position, float width, float height, int[] colour) {
